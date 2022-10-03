@@ -1,7 +1,6 @@
 from setuptools import setup
 
 setup(name='pyqgen',
-      version='0.1',
       description='Generate questions from orgmode files',
       url='http://github.com/glipari/pyqgen',
       author='Giuseppe Lipari',

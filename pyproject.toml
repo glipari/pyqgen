@@ -1,0 +1,32 @@
+[build-system]
+requires = [
+    "hatchling>=1.10.0",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyqgen"
+dynamic = [
+    "version",
+]
+description = "Generate questions from orgmode files"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Giuseppe Lipari", email = "giuseppe.lipari@univ-lille.fr" },
+]
+dependencies = [
+    "orgparse",
+]
+
+[project.urls]
+Homepage = "http://github.com/glipari/pyqgen"
+
+[tool.hatch.version]
+path = "pyqgen/__init__.py"
+
+[tool.hatch.build]
+include = [
+    "/pyqgen/*.py",
+    "/scripts/pyqgen",
+]
