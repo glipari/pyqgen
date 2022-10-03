@@ -22,11 +22,8 @@ dependencies = [
 [project.urls]
 Homepage = "http://github.com/glipari/pyqgen"
 
+[project.scripts]
+pyqgen = "pyqgen.pyqgen:main"
+
 [tool.hatch.version]
 path = "pyqgen/__init__.py"
-
-[tool.hatch.build]
-include = [
-    "/pyqgen/*.py",
-    "/scripts/pyqgen",
-]
