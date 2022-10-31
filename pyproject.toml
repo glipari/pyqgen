@@ -17,6 +17,7 @@ authors = [
 ]
 dependencies = [
     "orgparse",
+    "openpyxl"
 ]
 
 [project.urls]

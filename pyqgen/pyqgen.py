@@ -3,13 +3,14 @@ import sys
 import random
 import argparse
 import copy
+from openpyxl import Workbook
 
 cat_str = 'CAT'
 num_str = 'NUM_RESP'
 num_cor = 'NUM_CORRECT'
 
 class Question :
-    def __init__(self, org_node) :
+    def __init__(self, org_node, group, num) :
         # the question 
         self.q = org_node
         # the question belongs to the following categories
@@ -23,6 +24,8 @@ class Question :
             self.rate = float(org_node.properties[num_cor])/float(org_node.properties[num_str])
         else :
             self.rate = 0.5
+        self.group = group
+        self.num = num
 
 
 def parse_arguments() :
@@ -59,7 +62,7 @@ def parse_arguments() :
                         help='Number of questions per group',
                         type=int,
                         nargs='*',
-                        default=[1, 1, 1],
+                        default=[], #1, 1, 1],
                         required=False)
     
     parser.add_argument('-e', '--header',
@@ -125,6 +128,65 @@ def print_questions(qlist, out) :
     out.write('\\cleardoublepage\n\n')
 
 
+
+def create_spreadsheet(nq, all_copies) :
+    """Generates the xls file for grading.
+        Every spreadsheet has three sheets : 
+        - first one for grading
+        - second one contains the questions id, used for updating the database
+        - third one contains the weigth for each question 
+
+        In every sheet, the first line is the header of the table,
+        second one contains the normalised score per question (max grade = 5 per question).
+        From the third row, the grading starts for each question.  
+        
+        Two ways to compute the total grade: with or without weights. In the first case, 
+        grades are computed so that the final grade is in the range 0-20 (French grading system). 
+        In the second case, the grades are additionally weigthed by the question specific weigth. 
+
+        Such grade is an indication of the difficulty of answering the
+        question, so tough questions are weighted less. This is an
+        experimental feature, do not use right now.
+    """
+    
+    wb = Workbook()
+    ws1 = wb.active
+    ws1.title = "Notes"
+    ws2 = wb.create_sheet("Questions")
+    ws3 = wb.create_sheet("Weights")
+    
+    header = ["N", "Nom", "Prenom"]
+    for x in range(nq) :
+        header.append("q{}".format(x+1))
+        
+    ws2.append(header)
+    ws3.append(header)
+    header.append("Total")
+    ws1.append(header)
+    
+    i = 1
+    for c in all_copies :
+        row = ["{}".format(i), "", ""]
+        ws1.append(row)
+        for q in c :
+            row.append("{}-{}".format(q.group, q.num))
+            
+        ws2.append(row)
+
+        row = ["{}".format(i), "", ""]
+        for q in c :
+            row.append("{}".format(q.rate))
+        ws3.append(row)
+
+        i+=1
+
+    wb.save('prova.xls')
+    
+    
+    
+
+    
+
 ## BEGINNING OF THE SCRIPT ## 
 
 def main() :    
@@ -140,7 +202,6 @@ def main() :
               "#+LATEX_HEADER: \\usepackage[textwidth=18cm, textheight=22.5cm]{geometry}\n",
               "#+latex_header: \\usepackage{ifthen,changepage}\n",
               "#+exclude_tags: solution noexport\n"]
-
 
     # parse the arguments into object options 
     options = parse_arguments()
@@ -174,6 +235,9 @@ def main() :
     ngroups = len(root.children) 
     print("Found", ngroups, "groups of questions")
 
+    if options.ng == [] :
+        options.ng = [1] * ngroups
+        
     # the number of groups should match the lenght of options.ng (a list containing
     # the number of question to be selected per each group). 
     if ngroups != len(options.ng) :
@@ -183,13 +247,15 @@ def main() :
 
     # a list of lists of questions 
     question_groups = []
-    i = 0
-    # creates the questions 
+    i = 1
+    # creates the questions
     for g in root.children :
         qql = []
+        j = 1
         for node in g.children :
-            q = Question(node)
+            q = Question(node, i, j)
             qql.append(q)
+            j+=1
             # print(node.heading, q.categories, q.rate)
         print("Found", len(qql), "questions in group", i)
         i+=1
@@ -199,6 +265,10 @@ def main() :
     print_header(HEADER, out)
 
     count = 1
+    nq = sum(options.ng)
+    print("{} questions per questionnaire".format(nq)) 
+
+    all_copies = []
     # the start of each questionnaire
     for exam in range(options.ncopies) :
         out.write('* ' + options.title + '\n')
@@ -212,7 +282,10 @@ def main() :
         qlist = generate_questionnaire(question_groups, options.ng)
         print_questions(qlist, out)
         count += 1
-
+        all_copies.append(qlist)
+        
+    print ("Len of all_copies", len(all_copies))
     print("Generated", options.ncopies, "exam copies into", options.outfile)
 
-
+    create_spreadsheet(nq, all_copies)
+    
