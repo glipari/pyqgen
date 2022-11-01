@@ -114,6 +114,34 @@ def generate_questionnaire(q_groups, ng) :
     return qql
 
 
+def generate_allcopies(question_groups, ncopies, ng) :
+    nq = sum(ng)
+    print("{} questions per questionnaire".format(nq)) 
+
+    all_copies = []
+    # the start of each questionnaire
+    for exam in range(ncopies) :
+        # randomly generates the questions for each questionnaire
+        qlist = generate_questionnaire(question_groups, ng)
+        all_copies.append(qlist)
+
+    return all_copies
+
+
+def output_exam(out, HEADER, title, ifile, all_copies) :
+    print_header(HEADER, out)
+    ncopies = len(all_copies)
+    for exam in range(ncopies) :
+        out.write('* ' + title + '\n')
+        out.write('- N: ' + str(exam+1) + '\n')
+        if ifile != 'none' :
+            out.write('** Instructions\n')
+            for x in ilines:
+                out.write(x)
+        print_questions(all_copies[exam], out)
+    
+
+
 def print_questions(qlist, out) :
     for qx in qlist :
         out.write('* ')
@@ -129,6 +157,31 @@ def print_questions(qlist, out) :
     out.write('\\cleardoublepage\n\n')
 
 
+def read_questions(filename) :
+    # open the org file 
+    print("Opening file", filename)
+    # the top node 
+    root = load(filename)
+
+    # a list of lists of questions 
+    question_groups = []
+    i = 1
+    # creates the questions
+    for g in root.children :
+        qql = []
+        j = 1
+        for node in g.children :
+            q = Question(node, i, j)
+            qql.append(q)
+            j+=1
+        print("Found", len(qql), "questions in group", i)
+        i+=1
+        question_groups.append(qql)    
+
+    return question_groups
+    
+
+    
 def create_spreadsheet(nq, all_copies, outfile) :
     """Generates the xls file for grading.
         Every spreadsheet has three sheets : 
@@ -223,15 +276,9 @@ def main() :
     # parse the arguments into object options 
     options = parse_arguments()
 
-    # open the org file 
-    print("Opening file", options.db)
-    # the top node 
-    root = load(options.db)
-
-    # if options.outfile == options.db or options.outfile == nil :
-    #      print("Error, output file has not been specified")
-    #      sys.exit(-1)
-
+    # read all questions 
+    question_groups = read_questions(options.db)
+        
     # the output file 
     print("Output into ", options.outfile)
     out = open(options.outfile, 'w')
@@ -241,7 +288,7 @@ def main() :
         fh = open(options.header)
         HEADER = fh.readlines();
 
-    # an optional instruction file (maybe not necessary) 
+    # an optional instruction file 
     if options.ifile != 'none' :
         instructions = open(options.ifile, 'r')
         ilines = instructions.readlines()
@@ -249,7 +296,7 @@ def main() :
         ilines = ""
 
     # the groups are in the top-level headings
-    ngroups = len(root.children) 
+    ngroups = len(question_groups) 
     print("Found", ngroups, "groups of questions")
 
     if options.ng == [] :
@@ -262,47 +309,33 @@ def main() :
         print("Consider specifying the --ng option")
         sys.exit(3)
 
-    # a list of lists of questions 
-    question_groups = []
-    i = 1
-    # creates the questions
-    for g in root.children :
-        qql = []
-        j = 1
-        for node in g.children :
-            q = Question(node, i, j)
-            qql.append(q)
-            j+=1
-            # print(node.heading, q.categories, q.rate)
-        print("Found", len(qql), "questions in group", i)
-        i+=1
-        question_groups.append(qql)    
 
     # outputs the header first 
-    print_header(HEADER, out)
 
-    count = 1
-    nq = sum(options.ng)
-    print("{} questions per questionnaire".format(nq)) 
+    all_copies = generate_allcopies(question_groups, options.ncopies, options.ng)
+    output_exam(out, HEADER, options.title, options.ifile, all_copies)
 
-    all_copies = []
-    # the start of each questionnaire
-    for exam in range(options.ncopies) :
-        out.write('* ' + options.title + '\n')
-        out.write('- N: ' + str(count) + '\n')
-        if options.ifile != 'none' :
-            out.write('** Instructions\n')
-            for x in ilines:
-                out.write(x)
+    # count = 1
+    # nq = sum(options.ng)
+    # print("{} questions per questionnaire".format(nq)) 
 
-        # randomly generates the questions for each questionnaire
-        qlist = generate_questionnaire(question_groups, options.ng)
-        print_questions(qlist, out)
-        count += 1
-        all_copies.append(qlist)
+    # all_copies = []
+    # # the start of each questionnaire
+    # for exam in range(options.ncopies) :
+    #     out.write('* ' + options.title + '\n')
+    #     out.write('- N: ' + str(count) + '\n')
+    #     if options.ifile != 'none' :
+    #         out.write('** Instructions\n')
+    #         for x in ilines:
+    #             out.write(x)
+
+    #     # randomly generates the questions for each questionnaire
+    #     qlist = generate_questionnaire(question_groups, options.ng)
+    #     print_questions(qlist, out)
+    #     count += 1
+    #     all_copies.append(qlist)
         
-    print ("Len of all_copies", len(all_copies))
     print("Generated", options.ncopies, "exam copies into", options.outfile)
 
-    create_spreadsheet(nq, all_copies, options.outfile)
+    create_spreadsheet(sum(options.ng), all_copies, options.outfile)
     
