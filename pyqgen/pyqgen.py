@@ -23,6 +23,7 @@ class Question :
         if org_node.properties.get(num_cor) and org_node.properties.get(num_str) :
             self.rate = float(org_node.properties[num_cor])/float(org_node.properties[num_str])
         else :
+            # if no responses yet, then I give an average score of 0.5
             self.rate = 0.5
         self.group = group
         self.num = num
@@ -128,8 +129,7 @@ def print_questions(qlist, out) :
     out.write('\\cleardoublepage\n\n')
 
 
-
-def create_spreadsheet(nq, all_copies) :
+def create_spreadsheet(nq, all_copies, outfile) :
     """Generates the xls file for grading.
         Every spreadsheet has three sheets : 
         - first one for grading
@@ -150,9 +150,12 @@ def create_spreadsheet(nq, all_copies) :
     """
     
     wb = Workbook()
+    # first sheet contains notes
     ws1 = wb.active
     ws1.title = "Notes"
+    # the second sheet contains the questions (group-number)
     ws2 = wb.create_sheet("Questions")
+    # the thirs sheet contains the weights (experimental)
     ws3 = wb.create_sheet("Weights")
     
     header = ["N", "Nom", "Prenom"]
@@ -166,13 +169,24 @@ def create_spreadsheet(nq, all_copies) :
     
     i = 1
     for c in all_copies :
+        # first sheet 
         row = ["{}".format(i), "", ""]
+        startcol = 'D'
+        endcol = 'C'
+        for q in c :
+            row.append("")
+            endcol = chr(ord(endcol)+1)
+        row.append("=sum({}{}:{}{})".format(startcol, i+1, endcol,i+1))
         ws1.append(row)
+
+        # second sheet
+        row = ["{}".format(i), "", ""]
         for q in c :
             row.append("{}-{}".format(q.group, q.num))
             
         ws2.append(row)
 
+        # third sheet
         row = ["{}".format(i), "", ""]
         for q in c :
             row.append("{}".format(q.rate))
@@ -180,11 +194,14 @@ def create_spreadsheet(nq, all_copies) :
 
         i+=1
 
-    wb.save('prova.xls')
+    if ".org" in outfile :
+        outfile = outfile.replace("org", "xls")
+        print("Outfile is now", outfile)
+    else :
+        outfile += ".xls"
+    print("Writing the excel file into", outfile)
+    wb.save(outfile)
     
-    
-    
-
     
 
 ## BEGINNING OF THE SCRIPT ## 
@@ -287,5 +304,5 @@ def main() :
     print ("Len of all_copies", len(all_copies))
     print("Generated", options.ncopies, "exam copies into", options.outfile)
 
-    create_spreadsheet(nq, all_copies)
+    create_spreadsheet(nq, all_copies, options.outfile)
     

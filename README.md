@@ -18,12 +18,12 @@ The original list of questions must be redacted according to the
 this file represent *groups of questions*; the second level headings
 represent the questions ; deeper level headings represent solutions. 
 
-An example of database of questions is available HERE.
+An example of database of questions is available [here](examples/db-fs.org).
 
 PyQGen produces an org-mode file which contains the exams. This can
 later be transformed into a PDF file via LaTeX.
 
-PyGen also produces an excel sheet for easy of correction and grading. 
+PyGen also produces an excel sheet for correction and grading. 
 
 ## Installing 
 
@@ -46,7 +46,7 @@ Pip automatically takes care of the dependencies.
 
 The command is : 
 ```sh
-pyqgen [OPTIONS] output
+pyqgen output [OPTIONS] 
 ```
 
 where `output` the generated file that contains the exams. The
@@ -70,7 +70,57 @@ following options are possible :
   of the sheet (using the latex package geometry), the font, the font
   size, etc.
 
-## Full example 
 
-TODO 
+## Examples
 
+Go in directory `examples/basic`. The database of questions is in file
+`db.org`. Please open the file to familiarize with the way it is
+structured. In this example, there are 3 question groups (first
+heading) each one containing questions, exercises and solutions. 
+
+Solutions are third level heading tagged with the `:solution:` tag. 
+
+For each question, we can optionally specify three properties: 
+- `CATEGORY` is a comma-separated list of categories, each one
+  represents a set of questions. The program never generates
+  questionnaires with two questions belonging the same category. This
+  can be useful to avoid having two similar questions in the same
+  exam.
+  
+- `NUM_RESP` and `NUM_CORRECT` are used for feedback: the first one is
+  the number of time the question has been answered in a
+  questionnaire; the second one is the number of correct answers to
+  this question. The rate `NUM_CORRECT/NUM_RESP` represents an
+  indication of how easy is the question. THIS IS AN EXPERIMENTAL
+  FEATURE, not yet fully implemented.
+
+To compile the database file into a pdf, run 
+
+```
+./compile.sh db.org
+```
+
+To generate the questionnaire, you can run one of the following commands : 
+
+- `pyqgen out.org -n 30` 
+
+  This generates two files: `out.org` contains 30 copies of the
+  questionnaire, and `out.xls` contains the grading sheet.  
+  To compile the questionnaire into a PDF file, run `compile.sh
+  out.org`. Every instance of the questionnaire contains 3 questions,
+  one per question group.
+  
+- `pyqgen out.org -n 30 --ng 2 1 1`
+
+  This command generates questionnaires consisting of 4 questions
+  each: 2 taken from the first group, 1 from the second group, and 1
+  from the third group.
+    
+After generating the questionnaire, you can run 
+```
+./compile.sh
+``` 
+to get the `out.pdf` file in output. 
+
+
+	
