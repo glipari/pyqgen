@@ -131,10 +131,16 @@ def generate_allcopies(question_groups, ncopies, ng) :
 def output_exam(out, HEADER, title, ifile, all_copies) :
     print_header(HEADER, out)
     ncopies = len(all_copies)
+    if ifile != 'none' :
+        instructions = open(ifile, 'r')
+        ilines = instructions.readlines()
+    else:
+        ilines = ""
+        
     for exam in range(ncopies) :
         out.write('* ' + title + '\n')
         out.write('- N: ' + str(exam+1) + '\n')
-        if ifile != 'none' :
+        if ifile != 'none' :            
             out.write('** Instructions\n')
             for x in ilines:
                 out.write(x)
@@ -289,11 +295,6 @@ def main() :
         HEADER = fh.readlines();
 
     # an optional instruction file 
-    if options.ifile != 'none' :
-        instructions = open(options.ifile, 'r')
-        ilines = instructions.readlines()
-    else:
-        ilines = ""
 
     # the groups are in the top-level headings
     ngroups = len(question_groups) 
@@ -309,31 +310,10 @@ def main() :
         print("Consider specifying the --ng option")
         sys.exit(3)
 
-
     # outputs the header first 
 
     all_copies = generate_allcopies(question_groups, options.ncopies, options.ng)
     output_exam(out, HEADER, options.title, options.ifile, all_copies)
-
-    # count = 1
-    # nq = sum(options.ng)
-    # print("{} questions per questionnaire".format(nq)) 
-
-    # all_copies = []
-    # # the start of each questionnaire
-    # for exam in range(options.ncopies) :
-    #     out.write('* ' + options.title + '\n')
-    #     out.write('- N: ' + str(count) + '\n')
-    #     if options.ifile != 'none' :
-    #         out.write('** Instructions\n')
-    #         for x in ilines:
-    #             out.write(x)
-
-    #     # randomly generates the questions for each questionnaire
-    #     qlist = generate_questionnaire(question_groups, options.ng)
-    #     print_questions(qlist, out)
-    #     count += 1
-    #     all_copies.append(qlist)
         
     print("Generated", options.ncopies, "exam copies into", options.outfile)
 
