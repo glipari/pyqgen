@@ -18,7 +18,7 @@ The original list of questions must be redacted according to the
 this file represent *groups of questions*; the second level headings
 represent the questions ; deeper level headings represent solutions. 
 
-An example of database of questions is available [here](examples/db-fs.org).
+An example of database of questions is available [here](examples/basic/db.org).
 
 PyQGen produces an org-mode file which contains the exams. This can
 later be transformed into a PDF file via LaTeX.
